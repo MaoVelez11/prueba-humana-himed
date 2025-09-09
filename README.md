@@ -194,3 +194,118 @@ pm.test("La respuesta es 200 OK", function () { pm.response.to.have.status(200);
 pm.test("El nombre del paciente es correcto", function () { var jsonData = pm.response.json(); pm.expect(jsonData.nombre).to.eql("Carlos"); });
 
 Pre-request Scripts: Scripts que se ejecutan antes de enviar la petición. Útil para, por ejemplo, generar un token de autenticación.
+
+
+
+
+Paso 1: Cómo Encontrar el "Localizador" en 'Inspeccionar'
+Antes de poder hacer clic o escribir, necesitas darle a Selenium la dirección exacta del elemento. A esta dirección la llamamos localizador. Piensa en ello como si le dieras a un GPS una dirección para encontrar una casa.
+
+Para tu botón de ejemplo, así es como encuentras las posibles "direcciones" al inspeccionarlo:
+<a class="button btn-himed button_size_1" href="https://m.medsas.co/" ...><span ...>Ingresar a HiMed Web</span></a>
+
+Aquí tienes varias opciones de localizadores, de la más fácil a la más técnica:
+
+Por el Texto Visible (la más fácil y recomendada para este caso) 📍:
+
+Qué ves en la página: El texto "Ingresar a HiMed Web".
+
+Estrategia en Selenium: By.LINK_TEXT (porque es un enlace <a>).
+
+Valor a usar: "Ingresar a HiMed Web"
+
+Por su Clase (Class):
+
+Qué ves en el código: class="button btn-himed button_size_1"
+
+Estrategia en Selenium: By.CLASS_NAME o, mejor aún, By.CSS_SELECTOR.
+
+Valor a usar: Con By.CLASS_NAME puedes usar "btn-himed". Con By.CSS_SELECTOR puedes ser más específico escribiendo ".btn-himed".
+
+Por otro Atributo (como href):
+
+Qué ves en el código: href="https://m.medsas.co/"
+
+Estrategia en Selenium: By.CSS_SELECTOR.
+
+Valor a usar: a[href="https://m.medsas.co/"] (Esto se lee como: "busca un enlace a que tenga un atributo href con este valor exacto").
+
+Recomendación para tu botón: La forma más clara y robusta es usar el texto visible. Es fácil de leer y es menos probable que cambie.
+
+Paso 2: Cómo Escribir el Código para las Acciones
+Una vez que has elegido tu localizador, escribir el código es muy sencillo. Siempre sigue dos pasos: 1. Encuentra el elemento (y espéralo) y 2. Realiza la acción.
+
+Clic Sencillo 🖱️
+Esta es la acción más común. Usando tu botón como ejemplo con el localizador By.LINK_TEXT.
+
+Python
+
+# Importa las herramientas necesarias al inicio de tu script
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+# Dentro de tu código de prueba (asumiendo que ya tienes 'driver' y 'wait' configurados)
+
+# 1. Espera inteligentemente a que el botón sea clickeable y guárdalo en una variable
+boton_ingresar = wait.until(
+    EC.element_to_be_clickable( (By.LINK_TEXT, "Ingresar a HiMed Web") )
+)
+
+# 2. Realiza la acción de hacer clic
+boton_ingresar.click()
+wait.until(...): Le dice a Selenium que espere hasta 15 segundos (o lo que hayas configurado) a que el botón no solo esté visible, sino también listo para ser presionado. Esto evita errores en páginas lentas.
+
+.click(): Simula el clic de un mouse.
+
+Escribir Texto ⌨️
+Para escribir, primero buscas un campo de texto (<input> o <textarea>) y luego usas .send_keys().
+
+Ejemplo: Imagina que en el inspector encuentras un campo de email: <input type="text" id="correo_usuario">
+
+Python
+
+# 1. Espera a que el campo de texto sea visible y guárdalo en una variable
+campo_email = wait.until(
+    EC.visibility_of_element_located( (By.ID, "correo_usuario") )
+)
+
+# 2. Es buena práctica borrar primero cualquier texto que pueda haber
+campo_email.clear()
+
+# 3. Escribe el texto deseado
+campo_email.send_keys("un.correo.de.prueba@test.com")
+.clear(): Borra el contenido del campo.
+
+.send_keys(): Simula a una persona escribiendo en el teclado.
+
+Doble Clic ⚡
+El doble clic es una acción más avanzada y requiere una herramienta especial llamada ActionChains. Piensa en ActionChains como una forma de crear una secuencia de acciones complejas (como mover el mouse, arrastrar y soltar, o hacer doble clic).
+
+Ejemplo: Imagina un botón que necesita un doble clic: <div id="boton_doble_clic">Haz doble clic aquí</div>
+
+Python
+
+# Importa la herramienta ActionChains al inicio de tu script
+from selenium.webdriver.common.action_chains import ActionChains
+
+# Dentro de tu código de prueba
+
+# 1. Primero, encuentra el elemento como siempre
+elemento_especial = wait.until(
+    EC.element_to_be_clickable( (By.ID, "boton_doble_clic") )
+)
+
+# 2. Crea un objeto ActionChains
+acciones = ActionChains(driver)
+
+# 3. Define la secuencia de acciones (en este caso, solo un doble clic)
+acciones.double_click(elemento_especial)
+
+# 4. ¡MUY IMPORTANTE! Ejecuta las acciones definidas
+acciones.perform()
+ActionChains(driver): Inicializa el constructor de acciones.
+
+.double_click(elemento): Le dices a la secuencia qué acción realizar y sobre qué elemento.
+
+.perform(): Esta es la línea clave. Sin ella, las acciones solo se definen pero nunca se ejecutan.
